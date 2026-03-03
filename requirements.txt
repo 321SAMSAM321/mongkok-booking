@@ -1,1 +1,1 @@
-pandas
+google-generativeai
