@@ -14,7 +14,7 @@ try:
     api_key = st.secrets["GEMINI_API_KEY"]
     genai.configure(api_key=api_key)
     # 設定使用 Gemini 模型
-    model = genai.GenerativeModel('gemini-1.5-flash')
+    model = genai.GenerativeModel('gemini-pro')
     api_ready = True
 except KeyError:
     st.error("⚠️ 系統找不到 API 金鑰。請確認是否已在 Streamlit 的 Settings -> Secrets 中設定 `GEMINI_API_KEY`。")
