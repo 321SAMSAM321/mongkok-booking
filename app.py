@@ -13,7 +13,7 @@ try:
     # 呢度繼續用你喺 Secrets 入面嗰把 Gemini 鑰匙
     genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
     # 🌟 修正點 1：改用 -latest 確保搵到最新模型，解決 404 報錯
-    model = genai.GenerativeModel('gemini-1.5-flash-latest')
+    model = genai.GenerativeModel('gemini-1.5-flash')
     api_ready = True
 except Exception as e:
     st.error(f"⚠️ 請先喺 Streamlit Secrets 設定好 `GEMINI_API_KEY` 喔！錯誤細節：{e}")
