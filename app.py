@@ -43,43 +43,63 @@ with st.form("story_form"):
 
     st.markdown("---")
     submitted = st.form_submit_button("✨ 施展魔法，生成專屬故事！", use_container_width=True)
-
+    
 # ==========================================
-# 呼叫 Gemini API 生成內容
+# 呼叫 Gemini 寫故事 ＆ 免費 API 生成插圖
 # ==========================================
 if submitted:
     if not api_ready:
-        st.warning("請先完成 API 金鑰設定才能施展魔法喔！")
+        st.warning("請先完成 Gemini API 金鑰設定才能施展魔法喔！")
     else:
-        with st.spinner("魔法精靈正在旺角街頭為你尋找靈感... 🧚‍♂️✨ (大約需要 3-5 秒)"):
+        with st.spinner("魔法精靈正在旺角街頭為你尋找靈感... 🧚‍♂️✨"):
             
-            # 給 AI 的超級指令 (Prompt)
+            # 1. 讓 Gemini 寫出本土故事，並特別要求它給出一句「英文畫圖指令」
             prompt = f"""
-            你現在是一位受歡迎的香港兒童繪本作家。請寫一個約 300 字的短篇童話故事。
+            你是一位香港兒童繪本作家。請寫一個約 150 字的短篇童話故事。
             故事主角：{character}
-            故事場景：{location} (請加入香港本土特色描述)
-            故事主題想帶出的道理：{theme}
-            寫作要求：
-            1. 故事必須生動有趣、充滿童真，適合 5-10 歲兒童閱讀。
-            2. 在結尾溫暖地帶出主題道理。
-            3. 使用繁體中文，可以適當加入一點點香港日常用語讓故事更親切。
+            故事場景：{location}
+            故事主題：{theme}
+            
+            請在故事最後，獨立提供一行英文的插圖描述指令 (Image Prompt)，格式如下：
+            [Image Prompt: A cute children's book illustration of {character} in {location}, Hong Kong, {art_style} style, vibrant colors]
             """
             
             try:
-                # 真正呼叫 Gemini 大腦！
+                # 呼叫 Gemini 大腦
                 response = model.generate_content(prompt)
+                full_response = response.text
                 
-                st.success("🎉 太棒了！你的專屬繪本故事出爐啦！")
+                # 簡單地將「中文故事」與「英文畫圖指令」分開
+                if "[Image Prompt:" in full_response:
+                    story_text = full_response.split("[Image Prompt:")[0].strip()
+                    # 擷取出英文指令並清理多餘符號
+                    image_prompt = full_response.split("[Image Prompt:")[1].replace("]", "").strip()
+                else:
+                    story_text = full_response
+                    # 萬一 AI 忘記給，我們自己組合一個備用的
+                    image_prompt = f"A cute illustration of {character} in {location}, Hong Kong, {art_style}"
+
+                # 2. 啟動視覺自動化：將英文指令轉換為圖片網址 (完全免費免金鑰)
+                # 將指令進行 URL 編碼，避免空白或特殊符號造成錯誤
+                encoded_prompt = urllib.parse.quote(image_prompt)
+                # 使用寬高比 16:9 (width=1024&height=576) 適合 YouTube 影片格式
+                image_url = f"https://pollinations.ai/p/{encoded_prompt}?width=1024&height=576&nologo=true"
+
+                # 3. 成果華麗展示
+                st.success("🎉 太棒了！你的專屬繪本出爐啦！")
                 
-                # 顯示故事
-                st.markdown("### 📖 故事大綱 (準備好你的聲音，我們要錄音囉！)")
-                st.info(response.text)
+                # 將畫面分為左右兩邊：左邊看大圖，右邊讀故事
+                col_img, col_text = st.columns([1.2, 1])
                 
-                # 顯示畫圖指令
-                st.markdown("### 🎨 AI 畫家專用指令 (Prompt)")
-                st.markdown("*(同事請將以下英文指令複製到 Midjourney 或 DALL-E 3 來產出插圖)*")
-                image_prompt = f"A cute children's book illustration of {character} in {location}, Hong Kong, {art_style} style, warm lighting, vibrant colors, detailed background, heartwarming atmosphere --ar 16:9"
-                st.code(image_prompt)
-                
+                with col_img:
+                    st.markdown("### 🖼️ 你的專屬插圖")
+                    # 直接在網頁上渲染這張圖片！
+                    st.image(image_url, use_container_width=True)
+                    st.caption("✨ 提示：對圖片按右鍵即可「另存圖片」下載喔！")
+                    
+                with col_text:
+                    st.markdown("### 📖 故事大綱")
+                    st.info(story_text)
+                    
             except Exception as e:
                 st.error(f"魔法施展失敗了！錯誤代碼：{e}")
