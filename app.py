@@ -12,11 +12,11 @@ api_ready = False
 try:
     # 呢度繼續用你喺 Secrets 入面嗰把 Gemini 鑰匙
     genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
-    # 確保使用最新活躍模型
-    model = genai.GenerativeModel('gemini-2.5-flash')
+    # 🌟 修正點 1：改用 -latest 確保搵到最新模型，解決 404 報錯
+    model = genai.GenerativeModel('gemini-1.5-flash-latest')
     api_ready = True
-except:
-    st.error("⚠️ 請先喺 Streamlit Secrets 設定好 `GEMINI_API_KEY` 喔！")
+except Exception as e:
+    st.error(f"⚠️ 請先喺 Streamlit Secrets 設定好 `GEMINI_API_KEY` 喔！錯誤細節：{e}")
 
 # ==========================================
 # 2. 介面設計
@@ -44,8 +44,6 @@ with st.form("story_form"):
 # ==========================================
 # 3. 執行創作 (文字 + 視覺)
 # ==========================================
-
-
 if submitted:
     if not api_ready:
         st.warning("請先設定好 API Key 喔！")
@@ -66,8 +64,8 @@ if submitted:
                 # 將英文指令編碼成網址格式
                 encoded_prompt = urllib.parse.quote(visual_desc)
                 
-                # 呢條就係魔法網址！
-                image_url = f"https://pollinations.ai/p/{encoded_prompt}?width=1024&height=576&nologo=true"
+                # 🌟 修正點 2：使用最新版 image.pollinations 接口與隨機種子 (seed)，解決問號圖
+                image_url = f"https://image.pollinations.ai/prompt/{encoded_prompt}?width=1024&height=576&nologo=true&seed={int(time.time())}"
                 
                 # --- 步驟 C: 展示結果 ---
                 st.markdown("---")
