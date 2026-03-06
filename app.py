@@ -1,83 +1,77 @@
 import streamlit as st
-import google.generativeai as genai
-import urllib.parse
 import time
-import re
 
-# ==========================================
-# 1. 初始化與大腦尋找 (解決 404/找不到模型)
-# ==========================================
-st.set_page_config(page_title="旺角 AI 繪本工場 - 終極修復", layout="wide")
+# --- 1. 頁面設定 ---
+st.set_page_config(page_title="AI 繪畫工廠", page_icon="🎨", layout="wide")
 
-if "GEMINI_API_KEY" not in st.secrets:
-    st.error("❌ 請在 Secrets 設定 GEMINI_API_KEY")
-    st.stop()
+# --- 2. 標題與介紹 ---
+st.title("🏭 AI 繪畫自動化生產線")
+st.markdown("只要輸入你的靈感，這座工廠就能為你產出精美的藝術作品。")
 
-@st.cache_resource
-def init_ai():
-    genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
-    # 嘗試清單：從最先進到最通用
-    models_to_try = ['gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-pro']
-    for m_name in models_to_try:
-        try:
-            m = genai.GenerativeModel(m_name)
-            # 測試是否真的能用
-            m.generate_content("test", safety_settings={'HARM_CATEGORY_HARASSMENT': 'BLOCK_NONE'})
-            return m, m_name
-        except Exception as e:
-            continue
-    return None, None
-
-model, active_model_name = init_ai()
-
-# ==========================================
-# 2. 介面
-# ==========================================
-st.title("🧸 旺角社區客廳 - AI 繪本工場")
-st.markdown(f"**系統狀態：** {'✅ 已連接 ' + active_model_name if model else '❌ 連接失敗'}")
-
+# --- 3. 側邊欄：工廠控制面板 ---
 with st.sidebar:
-    art_style = st.selectbox("🎨 風格", ["吉卜力風 (Ghibli)", "迪士尼 3D 風", "水彩風"])
-    if st.button("♻️ 強制重啟系統"):
-        st.rerun()
+    st.header("⚙️ 生產參數設定")
+    
+    # 讓使用者選擇風格
+    art_style = st.selectbox(
+        "選擇繪畫風格",
+        ["寫實 (Realistic)", "油畫 (Oil Painting)", "賽博龐克 (Cyberpunk)", "吉卜力動漫 (Anime)"]
+    )
+    
+    # 選擇圖片尺寸
+    image_size = st.radio("圖片比例", ["256x256", "512x512", "1024x1024"])
+    
+    # 模擬進度條的開關
+    show_process = st.checkbox("顯示生產細節", value=True)
 
-with st.form("story_form"):
-    col1, col2, col3 = st.columns(3)
-    with col1: character = st.text_input("📝 主角", value="愛冒險的菠蘿包")
-    with col2: location = st.selectbox("🗺️ 地點", ["旺角金魚街", "社區客廳", "油麻地果欄"])
-    with col3: theme = st.selectbox("💡 道理", ["學會分享", "鄰里互助", "勇氣"])
-    submitted = st.form_submit_button("✨ 施展魔法", use_container_width=True)
+    st.info("提示：進階功能（如種子值設定）開發中...")
 
-# ==========================================
-# 3. 生成與顯示 (修復藍色問號)
-# ==========================================
-if submitted:
-    if not model:
-        st.error("❌ AI 暫時無法連線，請確認你的 API Key 沒過期且 Secrets 設定正確。")
+# --- 4. 主要輸入區 ---
+st.subheader("✍️ 注入靈感 (Prompt)")
+user_prompt = st.text_area("請詳細描述你想要生成的畫面：", placeholder="例如：一隻穿著太空衣在火星上喝咖啡的貓...")
+
+# --- 5. 生產邏輯 ---
+if st.button("🚀 開始生產圖像"):
+    if user_prompt:
+        with st.status("🏗️ 工廠運作中...", expanded=True) as status:
+            st.write("正在解析靈感描述...")
+            time.sleep(1) # 模擬邏輯處理
+            st.write(f"正在套用 {art_style} 風格轉換...")
+            time.sleep(1)
+            st.write("影像渲染中...")
+            time.sleep(2)
+            
+            # 這裡應該放置你的 AI 模型 API 調用邏輯
+            # 範例：response = openai.Image.create(prompt=user_prompt, ...)
+            
+            status.update(label="✅ 生產完成！", state="complete", expanded=False)
+
+        # 模擬生成結果
+        # 在實際應用中，這會是 API 回傳的圖片網址或本地路徑
+        st.success("您的作品已出爐！")
+        
+        # 建立兩欄式佈局來展示結果
+        col1, col2 = st.columns([2, 1])
+        
+        with col1:
+            # 這裡暫用範例圖片代替
+            st.image("https://placekitten.com/800/600", caption=f"生成結果：{user_prompt}", use_container_width=True)
+        
+        with col2:
+            st.write("### 🖼️ 作品資訊")
+            st.write(f"- **風格：** {art_style}")
+            st.write(f"- **尺寸：** {image_size}")
+            
+            # 下載按鈕
+            st.download_button(
+                label="💾 下載作品",
+                data="這是一個模擬下載", # 實際應為圖片二進位數據
+                file_name="ai_factory_artwork.png",
+                mime="image/png"
+            )
     else:
-        with st.spinner("魔法生成中..."):
-            try:
-                # 寫故事
-                prompt = f"你是香港童書作家，請為「{character}」在「{location}」寫一個150字故事。最後一行只寫：IMAGE: A cute illustration of {character} in {location}, {art_style} style"
-                res = model.generate_content(prompt)
-                full_text = res.text
-                
-                story = full_text.split("IMAGE:")[0].strip()
-                img_desc = full_text.split("IMAGE:")[1].strip() if "IMAGE:" in full_text else f"{character} in {location}"
+        st.warning("⚠️ 請先輸入靈感描述，工廠才能開工喔！")
 
-                # 🌟 解決問號圖：清理所有非英文與空格
-                clean_img_prompt = re.sub(r'[^a-zA-Z0-9\s,]', '', img_desc)
-                encoded_url = urllib.parse.quote(clean_img_prompt)
-                
-                # 使用最穩定的 Pollinations 網址
-                image_url = f"https://image.pollinations.ai/prompt/{encoded_url}?width=1024&height=576&seed={int(time.time())}"
-
-                st.divider()
-                c1, c2 = st.columns([1.2, 1])
-                with c1:
-                    st.image(image_url, use_container_width=True)
-                with c2:
-                    st.info(story)
-                    st.success("✅ 魔法成功了！")
-            except Exception as e:
-                st.error(f"魔法失敗：{e}")
+# --- 6. 頁尾 ---
+st.divider()
+st.caption("Powered by Streamlit & Code 編程 | 2024")
