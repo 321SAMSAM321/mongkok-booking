@@ -33,16 +33,19 @@ user_prompt = st.text_area("請詳細描述你想要生成的畫面：", placeho
 # --- 5. 生產邏輯 ---
 if st.button("🚀 開始生產圖像"):
     if user_prompt:
-        with st.status("🏗️ 工廠運作中...", expanded=True) as status:
-            st.write("正在解析靈感描述...")
-            time.sleep(1) # 模擬邏輯處理
-            st.write(f"正在套用 {art_style} 風格轉換...")
-            time.sleep(1)
-            st.write("影像渲染中...")
-            time.sleep(2)
+        with st.spinner("🎨 免費 AI 正在為您構圖..."):
+            # 1. 將中文或英文 Prompt 進行網址編碼 (避免特殊字元錯誤)
+            encoded_prompt = urllib.parse.quote(f"{user_prompt}, {art_style} style")
             
-            # 這裡應該放置你的 AI 模型 API 調用邏輯
-            # 範例：response = openai.Image.create(prompt=user_prompt, ...)
+            # 2. 構建 Pollinations.ai 的免費圖片網址
+            # 你可以自訂寬度 (width)、高度 (height) 與種子值 (seed)
+            image_url = f"https://image.pollinations.ai/prompt/{encoded_prompt}?width=512&height=512&nologo=true"
+            
+            # 3. 直接顯示圖片
+            st.image(image_url, caption=f"生成結果：{user_prompt}", use_container_width=True)
+            st.success("✅ 生產完成！(來自 Pollinations 免費伺服器)")
+    else:
+        st.warning("⚠️ 請先輸入靈感描述！")
             
             status.update(label="✅ 生產完成！", state="complete", expanded=False)
 
