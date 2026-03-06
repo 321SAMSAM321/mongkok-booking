@@ -1,5 +1,6 @@
 import streamlit as st
-import urllib.parse  # 修正：必須匯入這個才能處理中文網址
+import urllib.parse
+import requests  # 新增：用來在背景下載圖片
 
 # --- 1. 頁面設定 ---
 st.set_page_config(page_title="AI 繪畫工廠", page_icon="🎨", layout="wide")
@@ -27,31 +28,46 @@ user_prompt = st.text_area("請詳細描述你想要生成的畫面：", placeho
 # --- 5. 生產邏輯 ---
 if st.button("🚀 開始生產圖像"):
     if user_prompt:
-        # 使用 spinner 顯示載入中狀態
-        with st.spinner("🎨 免費 AI 正在為您構圖..."):
-            # 1. 處理網址編碼 (讓中文也能通)
-            encoded_prompt = urllib.parse.quote(f"{user_prompt}, {art_style} style")
+        # 加上提示，讓使用者知道這次需要等一下
+        with st.spinner("🎨 免費 AI 正在為您構圖... (約需 10~20 秒，請耐心等候)"):
             
-            # 2. 根據選擇的尺寸調整網址 (從介面獲取尺寸)
+            # 1. 處理網址編碼
+            encoded_prompt = urllib.parse.quote(f"{user_prompt}, {art_style} style")
             width, height = image_size.split('x')
             image_url = f"https://image.pollinations.ai/prompt/{encoded_prompt}?width={width}&height={height}&nologo=true"
             
-            # 3. 建立兩欄式佈局來展示結果
-            st.success("✅ 生產完成！")
-            col1, col2 = st.columns([2, 1])
-            
-            with col1:
-                # 顯示真實生成的 AI 圖片
-                st.image(image_url, caption=f"生成結果：{user_prompt}", use_container_width=True)
-            
-            with col2:
-                st.write("### 🖼️ 作品資訊")
-                st.write(f"- **風格：** {art_style}")
-                st.write(f"- **尺寸：** {image_size}")
+            try:
+                # 2. 讓 Python 去請求網址，並等待伺服器把圖畫完 (設定最多等 60 秒)
+                response = requests.get(image_url, timeout=60)
+                response.raise_for_status() # 檢查是否有錯誤
                 
-                # 提供一個連結讓使用者直接儲存圖片
-                st.markdown(f"[🔗 點我查看原圖]({image_url})")
-                st.info("小技巧：右鍵點擊圖片即可「另存圖片」")
+                # 3. 成功拿到圖片的二進位資料！
+                image_bytes = response.content
+                
+                st.success("✅ 生產完成！")
+                col1, col2 = st.columns([2, 1])
+                
+                with col1:
+                    # 這次我們直接給 st.image 真正的「圖片資料」，而不是網址
+                    st.image(image_bytes, caption=f"生成結果：{user_prompt}", use_container_width=True)
+                
+                with col2:
+                    st.write("### 🖼️ 作品資訊")
+                    st.write(f"- **風格：** {art_style}")
+                    st.write(f"- **尺寸：** {image_size}")
+                    
+                    # 既然我們已經有了圖片資料，可以直接做一個真正的下載按鈕！
+                    st.download_button(
+                        label="💾 點我下載作品",
+                        data=image_bytes,
+                        file_name="ai_artwork.png",
+                        mime="image/png"
+                    )
+            
+            except Exception as e:
+                # 如果超時或伺服器出錯，給予友善提示
+                st.error("❌ 抱歉，免費伺服器目前太擁擠或連線超時，請再試一次！")
+                st.caption(f"錯誤細節: {e}")
                 
     else:
         st.warning("⚠️ 請先輸入靈感描述，工廠才能開工喔！")
