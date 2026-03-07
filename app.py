@@ -1,38 +1,23 @@
 import streamlit as st
 
-st.title("👾 我的虛擬小怪獸")
+st.set_page_config(page_title="我的童話書", page_icon="📖")
 
-# 初始化寵物狀態
-if 'hunger' not in st.session_state:
-    st.session_state.hunger = 50
-if 'happiness' not in st.session_state:
-    st.session_state.happiness = 50
+st.title("📖 創意小作家")
 
-# 顯示寵物狀態與表情
-if st.session_state.hunger <= 20:
-    mood = "😫 (好餓喔...)"
-elif st.session_state.happiness >= 80:
-    mood = "🤩 (超級開心！)"
-else:
-    mood = "😊 (感覺不錯)"
-
-st.header(f"小怪獸目前心情：{mood}")
-
-# 顯示狀態條
-st.write("飽食度")
-st.progress(st.session_state.hunger / 100)
-st.write("開心值")
-st.progress(st.session_state.happiness / 100)
-
-# 互動按鈕
+# 使用 columns 讓版面漂亮一點
 col1, col2 = st.columns(2)
+
 with col1:
-    if st.button("🍖 餵牠吃肉肉"):
-        st.session_state.hunger = min(100, st.session_state.hunger + 10)
-        st.toast("好吃！飽飽的！") # 小小的彈出提示
+    hero = st.text_input("誰是主角？", placeholder="例如：勇敢的小貓")
+    location = st.text_input("他們在哪裡？", placeholder="例如：糖果森林")
 
 with col2:
-    if st.button("🧸 陪牠玩遊戲"):
-        st.session_state.happiness = min(100, st.session_state.happiness + 15)
-        st.session_state.hunger = max(0, st.session_state.hunger - 5)
-        st.balloons() # 玩得開心就噴氣球！
+    action = st.text_input("他在做什麼？", placeholder="例如：尋找寶藏")
+    food = st.selectbox("他最喜歡吃什麼？", ["巧克力", "草莓", "彩虹糖"])
+
+if st.button("生成我的故事！"):
+    # 這裡可以用簡單的字串組合，也可以串接 OpenAI API (進階)
+    story = f"從前從前，有一隻{hero}住在{location}。有一天，他決定去{action}，路上一邊吃著他最愛的{food}，感覺非常幸福！"
+    
+    st.info(story)
+    st.snow() # 灑下雪花特效！
