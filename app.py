@@ -1,35 +1,22 @@
 import streamlit as st
+from PIL import Image, ImageOps
 
-st.title("🌈 魔法調色實驗室")
+st.title("🔍 小小偵探相機")
 
-# 滑桿互動
-r = st.slider("紅色 (Red)", 0, 255, 125)
-g = st.slider("綠色 (Green)", 0, 255, 125)
-b = st.slider("藍色 (Blue)", 0, 255, 125)
+# 開啟相機
+img_file = st.camera_input("拍一張偵探照吧！")
 
-# 將 RGB 轉為十六進位顏色
-hex_color = "#{:02x}{:02x}{:02x}".format(r, g, b)
-
-# 使用 Markdown 與 HTML 顯示大大的顏色區塊
-st.markdown(
-    f"""
-    <div style="
-        width: 100%;
-        height: 200px;
-        background-color: {hex_color};
-        border-radius: 20px;
-        border: 5px solid #333;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: white;
-        font-size: 30px;
-        font-weight: bold;
-        text-shadow: 2px 2px 4px #000;
-    ">
-        這就是你的專屬顏色！
-    </div>
-    """,
-    unsafe_allow_html=True
-)
-st.write(f"目前的顏色代碼是：{hex_color.upper()}")
+if img_file:
+    # 讀取圖片
+    img = Image.open(img_file)
+    
+    # 讓小朋友選一個濾鏡
+    effect = st.radio("想要什麼特效？", ["原圖", "黑白老照片", "左右翻轉"])
+    
+    if effect == "黑白老照片":
+        img = ImageOps.grayscale(img)
+    elif effect == "左右翻轉":
+        img = ImageOps.mirror(img)
+        
+    st.image(img, caption="這是你的特務照片！")
+    st.success("照片處理完成，快給爸爸媽媽看！")
